@@ -684,7 +684,7 @@ def get_model_cost_map(url: str):
     }
     }"""
 
-    content = json.load(json_text)
+    content = json.loads(json_text)
     return content
 
     #if (
