@@ -290,35 +290,428 @@ output_parse_pii: bool = False
 
 
 def get_model_cost_map(url: str):
-    if (
-        os.getenv("LITELLM_LOCAL_MODEL_COST_MAP", False) == True
-        or os.getenv("LITELLM_LOCAL_MODEL_COST_MAP", False) == "True"
-    ):
-        import importlib.resources
-        import json
+    return {
+    "azure/gpt-4o": {
+        "max_tokens": 4096,
+        "max_input_tokens": 128000,
+        "max_output_tokens": 4096,
+        "input_cost_per_token": 0.000005,
+        "output_cost_per_token": 0.000015,
+        "litellm_provider": "azure",
+        "mode": "chat",
+        "supports_function_calling": true,
+        "supports_parallel_function_calling": true,
+        "supports_vision": true
+    },
+    "azure/gpt-4o-2024-08-06": {
+        "max_tokens": 16384,
+        "max_input_tokens": 128000,
+        "max_output_tokens": 16384,
+        "input_cost_per_token": 0.00000275,
+        "output_cost_per_token": 0.000011,
+        "litellm_provider": "azure",
+        "mode": "chat",
+        "supports_function_calling": true,
+        "supports_parallel_function_calling": true,
+        "supports_vision": true
+    },
+    "azure/global-standard/gpt-4o-2024-08-06": {
+        "max_tokens": 16384,
+        "max_input_tokens": 128000,
+        "max_output_tokens": 16384,
+        "input_cost_per_token": 0.0000025,
+        "output_cost_per_token": 0.000010,
+        "litellm_provider": "azure",
+        "mode": "chat",
+        "supports_function_calling": true,
+        "supports_parallel_function_calling": true,
+        "supports_vision": true
+    },
+    "azure/global-standard/gpt-4o-mini": {
+        "max_tokens": 16384,
+        "max_input_tokens": 128000,
+        "max_output_tokens": 16384,
+        "input_cost_per_token": 0.00000015,
+        "output_cost_per_token": 0.00000060,
+        "litellm_provider": "azure",
+        "mode": "chat",
+        "supports_function_calling": true,
+        "supports_parallel_function_calling": true,
+        "supports_vision": true
+    },
+    "azure/gpt-4o-mini": {
+        "max_tokens": 16384,
+        "max_input_tokens": 128000,
+        "max_output_tokens": 16384,
+        "input_cost_per_token": 0.000000165,
+        "output_cost_per_token": 0.00000066,
+        "litellm_provider": "azure",
+        "mode": "chat",
+        "supports_function_calling": true,
+        "supports_parallel_function_calling": true,
+        "supports_vision": true
+    },
+    "azure/gpt-4-turbo-2024-04-09": {
+        "max_tokens": 4096,
+        "max_input_tokens": 128000,
+        "max_output_tokens": 4096,
+        "input_cost_per_token": 0.00001,
+        "output_cost_per_token": 0.00003,
+        "litellm_provider": "azure",
+        "mode": "chat",
+        "supports_function_calling": true,
+        "supports_parallel_function_calling": true,
+        "supports_vision": true
+    },
+    "azure/gpt-4-0125-preview": {
+        "max_tokens": 4096,
+        "max_input_tokens": 128000,
+        "max_output_tokens": 4096,
+        "input_cost_per_token": 0.00001,
+        "output_cost_per_token": 0.00003,
+        "litellm_provider": "azure",
+        "mode": "chat",
+        "supports_function_calling": true,
+        "supports_parallel_function_calling": true
+    },
+    "azure/gpt-4-1106-preview": {
+        "max_tokens": 4096,
+        "max_input_tokens": 128000,
+        "max_output_tokens": 4096,
+        "input_cost_per_token": 0.00001,
+        "output_cost_per_token": 0.00003,
+        "litellm_provider": "azure",
+        "mode": "chat",
+        "supports_function_calling": true,
+        "supports_parallel_function_calling": true
+    },
+    "azure/gpt-4-0613": {
+        "max_tokens": 4096,
+        "max_input_tokens": 8192,
+        "max_output_tokens": 4096,
+        "input_cost_per_token": 0.00003,
+        "output_cost_per_token": 0.00006,
+        "litellm_provider": "azure",
+        "mode": "chat",
+        "supports_function_calling": true
+    },
+    "azure/gpt-4-32k-0613": {
+        "max_tokens": 4096,
+        "max_input_tokens": 32768,
+        "max_output_tokens": 4096,
+        "input_cost_per_token": 0.00006,
+        "output_cost_per_token": 0.00012,
+        "litellm_provider": "azure",
+        "mode": "chat"
+    },
+    "azure/gpt-4-32k": {
+        "max_tokens": 4096,
+        "max_input_tokens": 32768,
+        "max_output_tokens": 4096,
+        "input_cost_per_token": 0.00006,
+        "output_cost_per_token": 0.00012,
+        "litellm_provider": "azure",
+        "mode": "chat"
+    },
+    "azure/gpt-4": {
+        "max_tokens": 4096,
+        "max_input_tokens": 8192,
+        "max_output_tokens": 4096,
+        "input_cost_per_token": 0.00003,
+        "output_cost_per_token": 0.00006,
+        "litellm_provider": "azure",
+        "mode": "chat",
+        "supports_function_calling": true
+    },
+    "azure/gpt-4-turbo": {
+        "max_tokens": 4096,
+        "max_input_tokens": 128000,
+        "max_output_tokens": 4096,
+        "input_cost_per_token": 0.00001,
+        "output_cost_per_token": 0.00003,
+        "litellm_provider": "azure", 
+        "mode": "chat",
+        "supports_function_calling": true,
+        "supports_parallel_function_calling": true
+    },
+    "azure/gpt-4-turbo-vision-preview": {
+        "max_tokens": 4096,
+        "max_input_tokens": 128000,
+        "max_output_tokens": 4096,
+        "input_cost_per_token": 0.00001,
+        "output_cost_per_token": 0.00003,
+        "litellm_provider": "azure", 
+        "mode": "chat",
+        "supports_vision": true
+    },
+    "azure/gpt-35-turbo-16k-0613": {
+        "max_tokens": 4096,
+        "max_input_tokens": 16385,
+        "max_output_tokens": 4096,
+        "input_cost_per_token": 0.000003,
+        "output_cost_per_token": 0.000004,
+        "litellm_provider": "azure",
+        "mode": "chat",
+        "supports_function_calling": true
+    },
+    "azure/gpt-35-turbo-1106": {
+        "max_tokens": 4096,
+        "max_input_tokens": 16384,
+        "max_output_tokens": 4096,
+        "input_cost_per_token": 0.000001,
+        "output_cost_per_token": 0.000002,
+        "litellm_provider": "azure",
+        "mode": "chat",
+        "supports_function_calling": true,
+        "supports_parallel_function_calling": true
+    },
+    "azure/gpt-35-turbo-0125": {
+        "max_tokens": 4096,
+        "max_input_tokens": 16384,
+        "max_output_tokens": 4096,
+        "input_cost_per_token": 0.0000005,
+        "output_cost_per_token": 0.0000015,
+        "litellm_provider": "azure",
+        "mode": "chat",
+        "supports_function_calling": true,
+        "supports_parallel_function_calling": true
+    },
+    "azure/gpt-35-turbo-16k": {
+        "max_tokens": 4096,
+        "max_input_tokens": 16385,
+        "max_output_tokens": 4096,
+        "input_cost_per_token": 0.000003,
+        "output_cost_per_token": 0.000004,
+        "litellm_provider": "azure",
+        "mode": "chat"
+    },
+    "azure/gpt-35-turbo": {
+        "max_tokens": 4096,
+        "max_input_tokens": 4097,
+        "max_output_tokens": 4096,
+        "input_cost_per_token": 0.0000005,
+        "output_cost_per_token": 0.0000015,
+        "litellm_provider": "azure",
+        "mode": "chat",
+        "supports_function_calling": true
+    },
+    "azure/gpt-3.5-turbo-instruct-0914": {
+        "max_tokens": 4097,
+        "max_input_tokens": 4097,
+        "input_cost_per_token": 0.0000015,
+        "output_cost_per_token": 0.000002,
+        "litellm_provider": "text-completion-openai",
+        "mode": "completion"
+    },
+    "azure/gpt-35-turbo-instruct": {
+        "max_tokens": 4097,
+        "max_input_tokens": 4097,
+        "input_cost_per_token": 0.0000015,
+        "output_cost_per_token": 0.000002,
+        "litellm_provider": "text-completion-openai",
+        "mode": "completion"
+    },
+    "azure/mistral-large-latest": {
+        "max_tokens": 32000,
+        "max_input_tokens": 32000,
+        "input_cost_per_token": 0.000008,
+        "output_cost_per_token": 0.000024,
+        "litellm_provider": "azure",
+        "mode": "chat",
+        "supports_function_calling": true
+    },
+    "azure/mistral-large-2402": {
+        "max_tokens": 32000,
+        "max_input_tokens": 32000,
+        "input_cost_per_token": 0.000008,
+        "output_cost_per_token": 0.000024,
+        "litellm_provider": "azure",
+        "mode": "chat",
+        "supports_function_calling": true
+    },
+    "azure/command-r-plus": {
+        "max_tokens": 4096, 
+        "max_input_tokens": 128000,
+        "max_output_tokens": 4096,
+        "input_cost_per_token": 0.000003,
+        "output_cost_per_token": 0.000015,
+        "litellm_provider": "azure",
+        "mode": "chat",
+        "supports_function_calling": true
+    },
+    "azure/ada": {
+        "max_tokens": 8191,
+        "max_input_tokens": 8191,
+        "input_cost_per_token": 0.0000001,
+        "output_cost_per_token": 0.000000,
+        "litellm_provider": "azure",
+        "mode": "embedding"
+    },
+    "azure/text-embedding-ada-002": {
+        "max_tokens": 8191,
+        "max_input_tokens": 8191,
+        "input_cost_per_token": 0.0000001,
+        "output_cost_per_token": 0.000000,
+        "litellm_provider": "azure",
+        "mode": "embedding"
+    },
+    "azure/text-embedding-3-large": {
+        "max_tokens": 8191,
+        "max_input_tokens": 8191,
+        "input_cost_per_token": 0.00000013,
+        "output_cost_per_token": 0.000000,
+        "litellm_provider": "azure",
+        "mode": "embedding"
+    },
+    "azure/text-embedding-3-small": {
+        "max_tokens": 8191,
+        "max_input_tokens": 8191,
+        "input_cost_per_token": 0.00000002,
+        "output_cost_per_token": 0.000000,
+        "litellm_provider": "azure",
+        "mode": "embedding"
+    },    
+    "azure/standard/1024-x-1024/dall-e-3": {
+        "input_cost_per_pixel": 0.0000000381469,
+        "output_cost_per_token": 0.0,
+        "litellm_provider": "azure", 
+        "mode": "image_generation"
+    },
+    "azure/hd/1024-x-1024/dall-e-3": {
+        "input_cost_per_pixel": 0.00000007629,
+        "output_cost_per_token": 0.0,
+        "litellm_provider": "azure", 
+        "mode": "image_generation"
+    },
+    "azure/standard/1024-x-1792/dall-e-3": {
+        "input_cost_per_pixel": 0.00000004359,
+        "output_cost_per_token": 0.0,
+        "litellm_provider": "azure", 
+        "mode": "image_generation"
+    },
+    "azure/standard/1792-x-1024/dall-e-3": {
+        "input_cost_per_pixel": 0.00000004359,
+        "output_cost_per_token": 0.0,
+        "litellm_provider": "azure", 
+        "mode": "image_generation"
+    },
+    "azure/hd/1024-x-1792/dall-e-3": {
+        "input_cost_per_pixel": 0.00000006539,
+        "output_cost_per_token": 0.0,
+        "litellm_provider": "azure", 
+        "mode": "image_generation"
+    },
+    "azure/hd/1792-x-1024/dall-e-3": {
+        "input_cost_per_pixel": 0.00000006539,
+        "output_cost_per_token": 0.0,
+        "litellm_provider": "azure", 
+        "mode": "image_generation"
+    },
+    "azure/standard/1024-x-1024/dall-e-2": {
+        "input_cost_per_pixel": 0.0,
+        "output_cost_per_token": 0.0,
+        "litellm_provider": "azure", 
+        "mode": "image_generation"
+    },
+    "azure_ai/jamba-instruct": {
+        "max_tokens": 4096,
+        "max_input_tokens": 70000,
+        "max_output_tokens": 4096,
+        "input_cost_per_token": 0.0000005,
+        "output_cost_per_token": 0.0000007,
+        "litellm_provider": "azure_ai",
+        "mode": "chat"
+    },
+    "azure_ai/mistral-large": {
+        "max_tokens": 8191,
+        "max_input_tokens": 32000,
+        "max_output_tokens": 8191,
+        "input_cost_per_token": 0.000004,
+        "output_cost_per_token": 0.000012,
+        "litellm_provider": "azure_ai",
+        "mode": "chat",
+        "supports_function_calling": true
+    },
+    "azure_ai/mistral-small": {
+        "max_tokens": 8191,
+        "max_input_tokens": 32000,
+        "max_output_tokens": 8191,
+        "input_cost_per_token": 0.000001,
+        "output_cost_per_token": 0.000003,
+        "litellm_provider": "azure_ai",
+        "supports_function_calling": true,
+        "mode": "chat"
+    },
+    "azure_ai/Meta-Llama-3-70B-Instruct": {
+        "max_tokens": 8192,
+        "max_input_tokens": 8192,
+        "max_output_tokens": 8192,
+        "input_cost_per_token": 0.0000011,
+        "output_cost_per_token": 0.00000037,
+        "litellm_provider": "azure_ai",
+        "mode": "chat"
+    },
+    "azure_ai/Meta-Llama-31-8B-Instruct": {
+        "max_tokens": 128000,
+        "max_input_tokens": 128000,
+        "max_output_tokens": 128000,
+        "input_cost_per_token": 0.0000003,
+        "output_cost_per_token": 0.00000061,
+        "litellm_provider": "azure_ai",
+        "mode": "chat",
+        "source":"https://azuremarketplace.microsoft.com/en-us/marketplace/apps/metagenai.meta-llama-3-1-8b-instruct-offer?tab=PlansAndPrice"
+    },
+    "azure_ai/Meta-Llama-31-70B-Instruct": {
+        "max_tokens": 128000,
+        "max_input_tokens": 128000,
+        "max_output_tokens": 128000,
+        "input_cost_per_token": 0.00000268,
+        "output_cost_per_token": 0.00000354,
+        "litellm_provider": "azure_ai",
+        "mode": "chat",
+        "source":"https://azuremarketplace.microsoft.com/en-us/marketplace/apps/metagenai.meta-llama-3-1-70b-instruct-offer?tab=PlansAndPrice"
+    },
+    "azure_ai/Meta-Llama-31-405B-Instruct": {
+        "max_tokens": 128000,
+        "max_input_tokens": 128000,
+        "max_output_tokens": 128000,
+        "input_cost_per_token": 0.00000533,
+        "output_cost_per_token": 0.000016,
+        "litellm_provider": "azure_ai",
+        "mode": "chat",
+        "source":"https://azuremarketplace.microsoft.com/en-us/marketplace/apps/metagenai.meta-llama-3-1-405b-instruct-offer?tab=PlansAndPrice"
+    }
+    }
 
-        with importlib.resources.open_text(
-            "litellm", "model_prices_and_context_window_backup.json"
-        ) as f:
-            content = json.load(f)
-            return content
+    #if (
+    #    os.getenv("LITELLM_LOCAL_MODEL_COST_MAP", False) == True
+    #    or os.getenv("LITELLM_LOCAL_MODEL_COST_MAP", False) == "True"
+    # ):
+    #     import importlib.resources
+    #     import json
 
-    try:
-        with requests.get(
-            url, timeout=5
-        ) as response:  # set a 5 second timeout for the get request
-            response.raise_for_status()  # Raise an exception if the request is unsuccessful
-            content = response.json()
-            return content
-    except Exception as e:
-        import importlib.resources
-        import json
+    #     with importlib.resources.open_text(
+    #         "litellm", "model_prices_and_context_window_backup.json"
+    #     ) as f:
+    #         content = json.load(f)
+    #         return content
 
-        with importlib.resources.open_text(
-            "litellm", "model_prices_and_context_window_backup.json"
-        ) as f:
-            content = json.load(f)
-            return content
+    # try:
+    #     with requests.get(
+    #         url, timeout=5
+    #     ) as response:  # set a 5 second timeout for the get request
+    #         response.raise_for_status()  # Raise an exception if the request is unsuccessful
+    #         content = response.json()
+    #         return content
+    # except Exception as e:
+    #     import importlib.resources
+    #     import json
+
+    #     with importlib.resources.open_text(
+    #         "litellm", "model_prices_and_context_window_backup.json"
+    #     ) as f:
+    #         content = json.load(f)
+    #         return content
 
 
 model_cost = get_model_cost_map(url=model_cost_map_url)
