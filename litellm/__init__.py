@@ -24,6 +24,7 @@ from litellm.proxy._types import (
 )
 import httpx
 import dotenv
+import json
 
 litellm_mode = os.getenv("LITELLM_MODE", "DEV")  # "PRODUCTION", "DEV"
 if litellm_mode == "DEV":
