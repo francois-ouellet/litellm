@@ -293,7 +293,7 @@ output_parse_pii: bool = False
 
 
 def get_model_cost_map(url: str):
-    return {
+    json_text = """{
     "azure/gpt-4o": {
         "max_tokens": 4096,
         "max_input_tokens": 128000,
@@ -684,7 +684,10 @@ def get_model_cost_map(url: str):
         "mode": "chat",
         "source":"https://azuremarketplace.microsoft.com/en-us/marketplace/apps/metagenai.meta-llama-3-1-405b-instruct-offer?tab=PlansAndPrice"
     }
-    }
+    }"""
+
+    content = json.load(json_text)
+    return content
 
     #if (
     #    os.getenv("LITELLM_LOCAL_MODEL_COST_MAP", False) == True
