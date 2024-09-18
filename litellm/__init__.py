@@ -25,6 +25,7 @@ from litellm.proxy._types import (
 import httpx
 import dotenv
 import json
+from enum import Enum
 
 litellm_mode = os.getenv("LITELLM_MODE", "DEV")  # "PRODUCTION", "DEV"
 if litellm_mode == "DEV":
@@ -45,6 +46,7 @@ _custom_logger_compatible_callbacks_literal = Literal[
     "dynamic_rate_limiter",
     "langsmith",
     "prometheus",
+    "datadog",
     "galileo",
     "braintrust",
     "arize",
@@ -55,6 +57,7 @@ _known_custom_logger_compatible_callbacks: List = list(
 )
 callbacks: List[Union[Callable, _custom_logger_compatible_callbacks_literal]] = []
 langfuse_default_tags: Optional[List[str]] = None
+langsmith_batch_size: Optional[int] = None
 _async_input_callback: List[Callable] = (
     []
 )  # internal variable - async custom callbacks are routed here.
@@ -119,7 +122,7 @@ in_memory_llm_clients_cache: dict = {}
 safe_memory_mode: bool = False
 enable_azure_ad_token_refresh: Optional[bool] = False
 ### DEFAULT AZURE API VERSION ###
-AZURE_DEFAULT_API_VERSION = "2024-07-01-preview"  # this is updated to the latest
+AZURE_DEFAULT_API_VERSION = "2024-08-01-preview"  # this is updated to the latest
 ### COHERE EMBEDDINGS DEFAULT TYPE ###
 COHERE_DEFAULT_EMBEDDING_INPUT_TYPE = "search_document"
 ### GUARDRAILS ###
@@ -6026,6 +6029,7 @@ openai_compatible_endpoints: List = [
     "api.together.xyz/v1",
     "app.empower.dev/api/v1",
     "inference.friendli.ai/v1",
+    "api.sambanova.ai/v1",
 ]
 
 # this is maintained for Exception Mapping
@@ -6035,6 +6039,7 @@ openai_compatible_providers: List = [
     "groq",
     "nvidia_nim",
     "cerebras",
+    "sambanova",
     "ai21_chat",
     "volcengine",
     "codestral",
@@ -6049,7 +6054,12 @@ openai_compatible_providers: List = [
     "azure_ai",
     "github",
 ]
-
+openai_text_completion_compatible_providers: List = (
+    [  # providers that support `/v1/completions`
+        "together_ai",
+        "fireworks_ai",
+    ]
+)
 
 # well supported replicate llms
 replicate_models: List = [
@@ -6239,62 +6249,67 @@ model_list = (
     + gemini_models
 )
 
-provider_list: List = [
-    "openai",
-    "custom_openai",
-    "text-completion-openai",
-    "cohere",
-    "cohere_chat",
-    "clarifai",
-    "anthropic",
-    "replicate",
-    "huggingface",
-    "together_ai",
-    "openrouter",
-    "vertex_ai",
-    "vertex_ai_beta",
-    "palm",
-    "gemini",
-    "ai21",
-    "baseten",
-    "azure",
-    "azure_text",
-    "azure_ai",
-    "sagemaker",
-    "sagemaker_chat",
-    "bedrock",
-    "vllm",
-    "nlp_cloud",
-    "petals",
-    "oobabooga",
-    "ollama",
-    "ollama_chat",
-    "deepinfra",
-    "perplexity",
-    "anyscale",
-    "mistral",
-    "groq",
-    "nvidia_nim",
-    "cerebras",
-    "ai21_chat",
-    "volcengine",
-    "codestral",
-    "text-completion-codestral",
-    "deepseek",
-    "maritalk",
-    "voyage",
-    "cloudflare",
-    "xinference",
-    "fireworks_ai",
-    "friendliai",
-    "watsonx",
-    "triton",
-    "predibase",
-    "databricks",
-    "empower",
-    "github",
-    "custom",  # custom apis
-]
+
+class LlmProviders(str, Enum):
+    OPENAI = "openai"
+    CUSTOM_OPENAI = "custom_openai"
+    TEXT_COMPLETION_OPENAI = "text-completion-openai"
+    COHERE = "cohere"
+    COHERE_CHAT = "cohere_chat"
+    CLARIFAI = "clarifai"
+    ANTHROPIC = "anthropic"
+    REPLICATE = "replicate"
+    HUGGINGFACE = "huggingface"
+    TOGETHER_AI = "together_ai"
+    OPENROUTER = "openrouter"
+    VERTEX_AI = "vertex_ai"
+    VERTEX_AI_BETA = "vertex_ai_beta"
+    PALM = "palm"
+    GEMINI = "gemini"
+    AI21 = "ai21"
+    BASETEN = "baseten"
+    AZURE = "azure"
+    AZURE_TEXT = "azure_text"
+    AZURE_AI = "azure_ai"
+    SAGEMAKER = "sagemaker"
+    SAGEMAKER_CHAT = "sagemaker_chat"
+    BEDROCK = "bedrock"
+    VLLM = "vllm"
+    NLP_CLOUD = "nlp_cloud"
+    PETALS = "petals"
+    OOBABOOGA = "oobabooga"
+    OLLAMA = "ollama"
+    OLLAMA_CHAT = "ollama_chat"
+    DEEPINFRA = "deepinfra"
+    PERPLEXITY = "perplexity"
+    ANYSCALE = "anyscale"
+    MISTRAL = "mistral"
+    GROQ = "groq"
+    NVIDIA_NIM = "nvidia_nim"
+    CEREBRAS = "cerebras"
+    AI21_CHAT = "ai21_chat"
+    VOLCENGINE = "volcengine"
+    CODESTRAL = "codestral"
+    TEXT_COMPLETION_CODESTRAL = "text-completion-codestral"
+    DEEPSEEK = "deepseek"
+    SAMBANOVA = "sambanova"
+    MARITALK = "maritalk"
+    VOYAGE = "voyage"
+    CLOUDFLARE = "cloudflare"
+    XINFERENCE = "xinference"
+    FIREWORKS_AI = "fireworks_ai"
+    FRIENDLIAI = "friendliai"
+    WATSONX = "watsonx"
+    TRITON = "triton"
+    PREDIBASE = "predibase"
+    DATABRICKS = "databricks"
+    EMPOWER = "empower"
+    GITHUB = "github"
+    CUSTOM = "custom"
+
+
+provider_list: List[Union[LlmProviders, str]] = list(LlmProviders)
+
 
 models_by_provider: dict = {
     "openai": open_ai_chat_completion_models + open_ai_text_completion_models,
@@ -6429,7 +6444,7 @@ from .llms.custom_llm import CustomLLM
 from .llms.huggingface_restapi import HuggingfaceConfig
 from .llms.anthropic.chat import AnthropicConfig
 from .llms.anthropic.completion import AnthropicTextConfig
-from .llms.databricks import DatabricksConfig, DatabricksEmbeddingConfig
+from .llms.databricks.chat import DatabricksConfig, DatabricksEmbeddingConfig
 from .llms.predibase import PredibaseConfig
 from .llms.replicate import ReplicateConfig
 from .llms.cohere.completion import CohereConfig
@@ -6465,7 +6480,7 @@ from .llms.sagemaker.sagemaker import SagemakerConfig
 from .llms.ollama import OllamaConfig
 from .llms.ollama_chat import OllamaChatConfig
 from .llms.maritalk import MaritTalkConfig
-from .llms.bedrock.chat import (
+from .llms.bedrock.chat.invoke_handler import (
     AmazonCohereChatConfig,
     AmazonConverseConfig,
     BEDROCK_CONVERSE_MODELS,
@@ -6493,14 +6508,21 @@ from .llms.bedrock.embed.cohere_transformation import BedrockCohereEmbeddingConf
 from .llms.OpenAI.openai import (
     OpenAIConfig,
     OpenAITextCompletionConfig,
-    MistralConfig,
     MistralEmbeddingConfig,
     DeepInfraConfig,
     GroqConfig,
     AzureAIStudioConfig,
 )
+from .llms.mistral.mistral_chat_transformation import MistralConfig
+from .llms.OpenAI.chat.o1_transformation import (
+    OpenAIO1Config,
+)
+from .llms.OpenAI.chat.gpt_transformation import (
+    OpenAIGPTConfig,
+)
 from .llms.nvidia_nim import NvidiaNimConfig
 from .llms.cerebras.chat import CerebrasConfig
+from .llms.sambanova.chat import SambanovaConfig
 from .llms.AI21.chat import AI21ChatConfig
 from .llms.fireworks_ai import FireworksAIConfig
 from .llms.volcengine import VolcEngineConfig

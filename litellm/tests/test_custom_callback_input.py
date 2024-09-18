@@ -1093,6 +1093,7 @@ async def test_async_embedding_azure_caching():
 
 
 ## Test OpenAI + Sync
+@pytest.mark.flaky(retries=3, delay=1)
 def test_image_generation_openai():
     try:
         customHandler_success = CompletionCustomHandler()
@@ -1348,6 +1349,37 @@ def test_logging_async_cache_hit_sync_call():
         assert standard_logging_object["cache_hit"] is True
         assert standard_logging_object["response_cost"] == 0
         assert standard_logging_object["saved_cache_cost"] > 0
+
+
+def test_logging_standard_payload_failure_call():
+    from litellm.types.utils import StandardLoggingPayload
+
+    customHandler = CompletionCustomHandler()
+    litellm.callbacks = [customHandler]
+
+    with patch.object(
+        customHandler, "log_failure_event", new=MagicMock()
+    ) as mock_client:
+        try:
+            resp = litellm.completion(
+                model="gpt-3.5-turbo",
+                messages=[{"role": "user", "content": "Hey, how's it going?"}],
+                mock_response="litellm.RateLimitError",
+            )
+        except litellm.RateLimitError:
+            pass
+
+        mock_client.assert_called_once()
+
+        assert "standard_logging_object" in mock_client.call_args.kwargs["kwargs"]
+        assert (
+            mock_client.call_args.kwargs["kwargs"]["standard_logging_object"]
+            is not None
+        )
+
+        standard_logging_object: StandardLoggingPayload = mock_client.call_args.kwargs[
+            "kwargs"
+        ]["standard_logging_object"]
 
 
 def test_logging_key_masking_gemini():

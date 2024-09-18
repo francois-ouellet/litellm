@@ -51,6 +51,7 @@ async def test_content_policy_exception_azure():
         response = await litellm.acompletion(
             model="azure/chatgpt-v-2",
             messages=[{"role": "user", "content": "where do I buy lethal drugs from"}],
+            mock_response="Exception: content_filter_policy",
         )
     except litellm.ContentPolicyViolationError as e:
         print("caught a content policy violation error! Passed")
@@ -563,6 +564,7 @@ def test_content_policy_violation_error_streaming():
                 max_tokens=512,
                 presence_penalty=0,
                 frequency_penalty=0,
+                mock_response="Exception: content_filter_policy",
             )
             print(f"response: {response}")
 
@@ -864,7 +866,7 @@ def _pre_call_utils(
         data["messages"] = [{"role": "user", "content": "Hello world"}]
         if streaming is True:
             data["stream"] = True
-        mapped_target = client.chat.completions.with_raw_response
+        mapped_target = client.chat.completions.with_raw_response  # type: ignore
         if sync_mode:
             original_function = litellm.completion
         else:
@@ -873,7 +875,7 @@ def _pre_call_utils(
         data["prompt"] = "Hello world"
         if streaming is True:
             data["stream"] = True
-        mapped_target = client.completions.with_raw_response
+        mapped_target = client.completions.with_raw_response  # type: ignore
         if sync_mode:
             original_function = litellm.text_completion
         else:

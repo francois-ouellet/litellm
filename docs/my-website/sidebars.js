@@ -31,7 +31,12 @@ const sidebars = {
         "proxy/quick_start",
         "proxy/docker_quick_start",
         "proxy/deploy", 
-        "proxy/prod", 
+        "proxy/prod",
+        {
+          type: "category",
+          label: "Architecture",
+          items: ["proxy/architecture"],
+        }, 
         {
           type: "link",
           label: "📖 All Endpoints (Swagger)",
@@ -76,6 +81,7 @@ const sidebars = {
             "proxy/guardrails/lakera_ai", 
             "proxy/guardrails/bedrock",  
             "proxy/guardrails/pii_masking_v2", 
+            "proxy/guardrails/secret_detection", 
             "proxy/guardrails/custom_guardrail", 
             "prompt_injection"
         ],
@@ -169,6 +175,7 @@ const sidebars = {
         "providers/baseten", 
         "providers/openrouter", 
         "providers/palm", 
+        "providers/sambanova", 
         // "providers/custom_openai_proxy",
         "providers/custom_llm_server",
         "providers/petals",
@@ -249,6 +256,7 @@ const sidebars = {
       type: "category",
       label: "Logging & Observability",
       items: [
+        "observability/opentelemetry_integration",
         "observability/langfuse_integration",
         "observability/logfire_integration",
         "observability/gcs_bucket_integration",
@@ -265,7 +273,7 @@ const sidebars = {
         "observability/openmeter",
         "observability/promptlayer_integration",
         "observability/wandb_integration",
-        "observability/traceloop_integration",
+        "observability/slack_integration",
         "observability/athina_integration",
         "observability/lunary_integration",
         "observability/greenscale_integration",

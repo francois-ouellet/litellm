@@ -533,7 +533,7 @@ def test_call_with_user_over_budget(prisma_client):
             # use generated key to auth in
             result = await user_api_key_auth(request=request, api_key=bearer_token)
             print("result from user auth with new key", result)
-            pytest.fail(f"This should have failed!. They key crossed it's budget")
+            pytest.fail("This should have failed!. They key crossed it's budget")
 
         asyncio.run(test())
     except Exception as e:
@@ -1755,7 +1755,7 @@ def test_call_with_key_over_model_budget(prisma_client):
             # use generated key to auth in
             result = await user_api_key_auth(request=request, api_key=bearer_token)
             print("result from user auth with new key", result)
-            pytest.fail(f"This should have failed!. They key crossed it's budget")
+            pytest.fail("This should have failed!. They key crossed it's budget")
 
         asyncio.run(test())
     except Exception as e:
@@ -2045,7 +2045,7 @@ async def test_default_key_params(prisma_client):
 
 
 @pytest.mark.asyncio()
-async def test_upperbound_key_params(prisma_client):
+async def test_upperbound_key_param_larger_budget(prisma_client):
     """
     - create key
     - get key info
@@ -2066,6 +2066,54 @@ async def test_upperbound_key_params(prisma_client):
         # print(result)
     except Exception as e:
         assert e.code == str(400)
+
+
+@pytest.mark.asyncio()
+async def test_upperbound_key_param_larger_duration(prisma_client):
+    setattr(litellm.proxy.proxy_server, "prisma_client", prisma_client)
+    setattr(litellm.proxy.proxy_server, "master_key", "sk-1234")
+    litellm.upperbound_key_generate_params = LiteLLM_UpperboundKeyGenerateParams(
+        max_budget=100, duration="14d"
+    )
+    await litellm.proxy.proxy_server.prisma_client.connect()
+    try:
+        request = GenerateKeyRequest(
+            max_budget=10,
+            duration="30d",
+        )
+        key = await generate_key_fn(request)
+        pytest.fail("Expected this to fail but it passed")
+        # print(result)
+    except Exception as e:
+        assert e.code == str(400)
+
+
+@pytest.mark.asyncio()
+async def test_upperbound_key_param_none_duration(prisma_client):
+    from datetime import datetime, timedelta
+
+    setattr(litellm.proxy.proxy_server, "prisma_client", prisma_client)
+    setattr(litellm.proxy.proxy_server, "master_key", "sk-1234")
+    litellm.upperbound_key_generate_params = LiteLLM_UpperboundKeyGenerateParams(
+        max_budget=100, duration="14d"
+    )
+    await litellm.proxy.proxy_server.prisma_client.connect()
+    try:
+        request = GenerateKeyRequest()
+        key = await generate_key_fn(request)
+
+        print(key)
+        # print(result)
+
+        assert key.max_budget == 100
+        assert key.expires is not None
+
+        _date_key_expires = key.expires.date()
+        _fourteen_days_from_now = (datetime.now() + timedelta(days=14)).date()
+
+        assert _date_key_expires == _fourteen_days_from_now
+    except Exception as e:
+        pytest.fail(f"Got exception {e}")
 
 
 def test_get_bearer_token():
@@ -2762,6 +2810,7 @@ async def test_generate_key_with_model_tpm_limit(prisma_client):
         "team": "litellm-team3",
         "model_tpm_limit": {"gpt-4": 100},
         "model_rpm_limit": {"gpt-4": 2},
+        "tags": None,
     }
 
     # Update model tpm_limit and rpm_limit
@@ -2782,6 +2831,7 @@ async def test_generate_key_with_model_tpm_limit(prisma_client):
         "team": "litellm-team3",
         "model_tpm_limit": {"gpt-4": 200},
         "model_rpm_limit": {"gpt-4": 3},
+        "tags": None,
     }
 
 
@@ -2818,6 +2868,7 @@ async def test_generate_key_with_guardrails(prisma_client):
     assert result["info"]["metadata"] == {
         "team": "litellm-team3",
         "guardrails": ["aporia-pre-call"],
+        "tags": None,
     }
 
     # Update model tpm_limit and rpm_limit
@@ -2836,6 +2887,7 @@ async def test_generate_key_with_guardrails(prisma_client):
     assert result["info"]["metadata"] == {
         "team": "litellm-team3",
         "guardrails": ["aporia-pre-call", "aporia-post-call"],
+        "tags": None,
     }
 
 

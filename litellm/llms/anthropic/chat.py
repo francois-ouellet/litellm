@@ -25,8 +25,8 @@ from litellm.litellm_core_utils.core_helpers import map_finish_reason
 from litellm.llms.custom_httpx.http_handler import (
     AsyncHTTPHandler,
     HTTPHandler,
-    _get_async_httpx_client,
     _get_httpx_client,
+    get_async_httpx_client,
 )
 from litellm.types.llms.anthropic import (
     AnthopicMessagesAssistantMessageParam,
@@ -158,6 +158,7 @@ class AnthropicConfig:
             "temperature",
             "top_p",
             "max_tokens",
+            "max_completion_tokens",
             "tools",
             "tool_choice",
             "extra_headers",
@@ -172,6 +173,8 @@ class AnthropicConfig:
     def map_openai_params(self, non_default_params: dict, optional_params: dict):
         for param, value in non_default_params.items():
             if param == "max_tokens":
+                optional_params["max_tokens"] = value
+            if param == "max_completion_tokens":
                 optional_params["max_tokens"] = value
             if param == "tools":
                 optional_params["tools"] = value
@@ -918,7 +921,9 @@ class AnthropicChatCompletion(BaseLLM):
         headers={},
         client=None,
     ) -> Union[ModelResponse, CustomStreamWrapper]:
-        async_handler = _get_async_httpx_client()
+        async_handler = get_async_httpx_client(
+            llm_provider=litellm.LlmProviders.ANTHROPIC
+        )
 
         try:
             response = await async_handler.post(

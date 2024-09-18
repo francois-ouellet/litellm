@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Union
 from pydantic import BaseModel, ConfigDict, Extra, Field, Json, model_validator
 from typing_extensions import Annotated, TypedDict
 
-from litellm.types.router import UpdateRouterConfig
+from litellm.types.router import RouterErrors, UpdateRouterConfig
 from litellm.types.utils import ProviderField
 
 if TYPE_CHECKING:
@@ -99,15 +99,15 @@ class LitellmUserRoles(str, enum.Enum):
         return ui_labels.get(self.value, "")
 
 
-class LitellmTableNames(str, enum.Enum):
+class LitellmTableNames(enum.Enum):
     """
     Enum for Table Names used by LiteLLM
     """
 
-    TEAM_TABLE_NAME: str = "LiteLLM_TeamTable"
-    USER_TABLE_NAME: str = "LiteLLM_UserTable"
-    KEY_TABLE_NAME: str = "LiteLLM_VerificationToken"
-    PROXY_MODEL_TABLE_NAME: str = "LiteLLM_ModelTable"
+    TEAM_TABLE_NAME = "LiteLLM_TeamTable"
+    USER_TABLE_NAME = "LiteLLM_UserTable"
+    KEY_TABLE_NAME = "LiteLLM_VerificationToken"
+    PROXY_MODEL_TABLE_NAME = "LiteLLM_ModelTable"
 
 
 AlertType = Literal[
@@ -123,6 +123,7 @@ AlertType = Literal[
     "outage_alerts",
     "region_outage_alerts",
     "fallback_reports",
+    "failed_tracking_spend",
 ]
 
 
@@ -140,7 +141,7 @@ class LiteLLMBase(BaseModel):
     Implements default functions, all pydantic objects should have.
     """
 
-    def json(self, **kwargs):
+    def json(self, **kwargs):  # type: ignore
         try:
             return self.model_dump(**kwargs)  # noqa
         except Exception as e:
@@ -160,17 +161,26 @@ class LiteLLMBase(BaseModel):
 class LiteLLM_UpperboundKeyGenerateParams(LiteLLMBase):
     """
     Set default upperbound to max budget a key called via `/key/generate` can be.
+
+    Args:
+        max_budget (Optional[float], optional): Max budget a key can be. Defaults to None.
+        budget_duration (Optional[str], optional): Duration of the budget. Defaults to None.
+        duration (Optional[str], optional): Duration of the key. Defaults to None.
+        max_parallel_requests (Optional[int], optional): Max number of requests that can be made in parallel. Defaults to None.
+        tpm_limit (Optional[int], optional): Tpm limit. Defaults to None.
+        rpm_limit (Optional[int], optional): Rpm limit. Defaults to None.
     """
 
     max_budget: Optional[float] = None
     budget_duration: Optional[str] = None
+    duration: Optional[str] = None
     max_parallel_requests: Optional[int] = None
     tpm_limit: Optional[int] = None
     rpm_limit: Optional[int] = None
 
 
 class LiteLLMRoutes(enum.Enum):
-    openai_route_names: List = [
+    openai_route_names = [
         "chat_completion",
         "completion",
         "embeddings",
@@ -179,7 +189,7 @@ class LiteLLMRoutes(enum.Enum):
         "moderations",
         "model_list",  # OpenAI /v1/models route
     ]
-    openai_routes: List = [
+    openai_routes = [
         # chat completions
         "/engines/{model}/chat/completions",
         "/openai/deployments/{model}/chat/completions",
@@ -242,20 +252,23 @@ class LiteLLMRoutes(enum.Enum):
         "/v1/models",
         # token counter
         "/utils/token_counter",
+        # rerank
+        "/rerank",
+        "/v1/rerank",
     ]
 
-    mapped_pass_through_routes: List = [
+    mapped_pass_through_routes = [
         "/bedrock",
         "/vertex-ai",
         "/gemini",
         "/langfuse",
     ]
 
-    anthropic_routes: List = [
+    anthropic_routes = [
         "/v1/messages",
     ]
 
-    info_routes: List = [
+    info_routes = [
         "/key/info",
         "/team/info",
         "/team/list",
@@ -268,11 +281,9 @@ class LiteLLMRoutes(enum.Enum):
     ]
 
     # NOTE: ROUTES ONLY FOR MASTER KEY - only the Master Key should be able to Reset Spend
-    master_key_only_routes: List = [
-        "/global/spend/reset",
-    ]
+    master_key_only_routes = ["/global/spend/reset", "/key/list"]
 
-    sso_only_routes: List = [
+    sso_only_routes = [
         "/key/generate",
         "/key/update",
         "/key/delete",
@@ -281,7 +292,7 @@ class LiteLLMRoutes(enum.Enum):
         "/sso/get/logout_url",
     ]
 
-    management_routes: List = [  # key
+    management_routes = [  # key
         "/key/generate",
         "/key/update",
         "/key/delete",
@@ -306,7 +317,7 @@ class LiteLLMRoutes(enum.Enum):
         "/model/info",
     ]
 
-    spend_tracking_routes: List = [
+    spend_tracking_routes = [
         # spend
         "/spend/keys",
         "/spend/users",
@@ -315,7 +326,7 @@ class LiteLLMRoutes(enum.Enum):
         "/spend/logs",
     ]
 
-    global_spend_tracking_routes: List = [
+    global_spend_tracking_routes = [
         # global spend
         "/global/spend/logs",
         "/global/spend",
@@ -327,7 +338,7 @@ class LiteLLMRoutes(enum.Enum):
         "/global/spend/report",
     ]
 
-    public_routes: List = [
+    public_routes = [
         "/routes",
         "/",
         "/health/liveliness",
@@ -338,7 +349,7 @@ class LiteLLMRoutes(enum.Enum):
         "/metrics",
     ]
 
-    internal_user_routes: List = (
+    internal_user_routes = (
         [
             "/key/generate",
             "/key/update",
@@ -356,7 +367,7 @@ class LiteLLMRoutes(enum.Enum):
         + sso_only_routes
     )
 
-    self_managed_routes: List = [
+    self_managed_routes = [
         "/team/member_add",
         "/team/member_delete",
     ]  # routes that manage their own allowed/disallowed logic
@@ -385,6 +396,8 @@ class LiteLLM_JWTAuth(LiteLLMBase):
     - team_id_jwt_field: The field in the JWT token that stores the team ID. Default - `client_id`.
     - team_allowed_routes: list of allowed routes for proxy team roles.
     - user_id_jwt_field: The field in the JWT token that stores the user id (maps to `LiteLLMUserTable`). Use this for internal employees.
+    - user_email_jwt_field: The field in the JWT token that stores the user email (maps to `LiteLLMUserTable`). Use this for internal employees.
+    - user_allowed_email_subdomain: If specified, only emails from specified subdomain will be allowed to access proxy.
     - end_user_id_jwt_field: The field in the JWT token that stores the end-user ID (maps to `LiteLLMEndUserTable`). Turn this off by setting to `None`. Enables end-user cost tracking. Use this for external customers.
     - public_key_ttl: Default - 600s. TTL for caching public JWT keys.
 
@@ -416,6 +429,8 @@ class LiteLLM_JWTAuth(LiteLLMBase):
     )
     org_id_jwt_field: Optional[str] = None
     user_id_jwt_field: Optional[str] = None
+    user_email_jwt_field: Optional[str] = None
+    user_allowed_email_domain: Optional[str] = None
     user_id_upsert: bool = Field(
         default=False, description="If user doesn't exist, upsert them into the db."
     )
@@ -576,7 +591,9 @@ class ModelParams(LiteLLMBase):
     @classmethod
     def set_model_info(cls, values):
         if values.get("model_info") is None:
-            values.update({"model_info": ModelInfo()})
+            values.update(
+                {"model_info": ModelInfo(id=None, mode="chat", base_model=None)}
+            )
         return values
 
 
@@ -599,7 +616,7 @@ class GenerateRequestBase(LiteLLMBase):
     soft_budget: Optional[float] = None
 
 
-class GenerateKeyRequest(GenerateRequestBase):
+class _GenerateKeyRequest(GenerateRequestBase):
     key_alias: Optional[str] = None
     key: Optional[str] = None
     duration: Optional[str] = None
@@ -617,8 +634,12 @@ class GenerateKeyRequest(GenerateRequestBase):
     guardrails: Optional[List[str]] = None
 
 
-class GenerateKeyResponse(GenerateKeyRequest):
-    key: str
+class GenerateKeyRequest(_GenerateKeyRequest):
+    tags: Optional[List[str]] = None
+
+
+class GenerateKeyResponse(_GenerateKeyRequest):
+    key: str  # type: ignore
     key_name: Optional[str] = None
     expires: Optional[datetime]
     user_id: Optional[str] = None
@@ -650,7 +671,7 @@ class GenerateKeyResponse(GenerateKeyRequest):
 class UpdateKeyRequest(GenerateKeyRequest):
     # Note: the defaults of all Params here MUST BE NONE
     # else they will get overwritten
-    key: str
+    key: str  # type: ignore
     duration: Optional[str] = None
     spend: Optional[float] = None
     metadata: Optional[dict] = None
@@ -676,9 +697,10 @@ class LiteLLM_ModelTable(LiteLLMBase):
     model_config = ConfigDict(protected_namespaces=())
 
 
-class NewUserRequest(GenerateKeyRequest):
+class NewUserRequest(_GenerateKeyRequest):
     max_budget: Optional[float] = None
     user_email: Optional[str] = None
+    user_alias: Optional[str] = None
     user_role: Optional[
         Literal[
             LitellmUserRoles.PROXY_ADMIN,
@@ -712,6 +734,7 @@ class NewUserResponse(GenerateKeyResponse):
     ] = None
     teams: Optional[list] = None
     organization_id: Optional[str] = None
+    user_alias: Optional[str] = None
 
 
 class UpdateUserRequest(GenerateRequestBase):
@@ -965,6 +988,7 @@ class TeamCallbackMetadata(LiteLLMBase):
 
 
 class LiteLLM_TeamTable(TeamBase):
+    team_id: str  # type: ignore
     spend: Optional[float] = None
     max_parallel_requests: Optional[int] = None
     budget_duration: Optional[str] = None
@@ -1050,7 +1074,7 @@ class LiteLLM_OrganizationTable(LiteLLMBase):
 
 
 class NewOrganizationResponse(LiteLLM_OrganizationTable):
-    organization_id: str
+    organization_id: str  # type: ignore
     created_at: datetime
     updated_at: datetime
 
@@ -1377,16 +1401,7 @@ class UserAPIKeyAuth(
     """
 
     api_key: Optional[str] = None
-    user_role: Optional[
-        Literal[
-            LitellmUserRoles.PROXY_ADMIN,
-            LitellmUserRoles.PROXY_ADMIN_VIEW_ONLY,
-            LitellmUserRoles.INTERNAL_USER,
-            LitellmUserRoles.INTERNAL_USER_VIEW_ONLY,
-            LitellmUserRoles.TEAM,
-            LitellmUserRoles.CUSTOMER,
-        ]
-    ] = None
+    user_role: Optional[LitellmUserRoles] = None
     allowed_model_region: Optional[Literal["eu"]] = None
     parent_otel_span: Optional[Span] = None
     rpm_limit_per_model: Optional[Dict[str, int]] = None
@@ -1683,6 +1698,9 @@ class SpendLogsMetadata(TypedDict):
     Specific metadata k,v pairs logged to spendlogs for easier cost tracking
     """
 
+    additional_usage_values: Optional[
+        dict
+    ]  # covers provider-specific usage information - e.g. prompt caching
     user_api_key: Optional[str]
     user_api_key_alias: Optional[str]
     user_api_key_team_id: Optional[str]
@@ -1702,9 +1720,9 @@ class SpendLogsPayload(TypedDict):
     total_tokens: int
     prompt_tokens: int
     completion_tokens: int
-    startTime: datetime
-    endTime: datetime
-    completionStartTime: Optional[datetime]
+    startTime: Union[datetime, str]
+    endTime: Union[datetime, str]
+    completionStartTime: Optional[Union[datetime, str]]
     model: str
     model_id: Optional[str]
     model_group: Optional[str]
@@ -1809,6 +1827,8 @@ class ProxyException(Exception):
             or "No deployments available" in self.message
         ):
             self.code = "429"
+        elif RouterErrors.no_deployments_with_tag_routing.value in self.message:
+            self.code = "401"
 
     def to_dict(self) -> dict:
         """Converts the ProxyException instance to a dictionary."""
@@ -1877,6 +1897,6 @@ class TeamAddMemberResponse(LiteLLM_TeamTable):
 
 class TeamInfoResponseObject(TypedDict):
     team_id: str
-    team_info: TeamBase
+    team_info: LiteLLM_TeamTable
     keys: List
     team_memberships: List[LiteLLM_TeamMembership]

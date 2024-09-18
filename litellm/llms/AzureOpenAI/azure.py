@@ -156,6 +156,7 @@ class AzureOpenAIConfig:
             "stream",
             "stop",
             "max_tokens",
+            "max_completion_tokens",
             "tools",
             "tool_choice",
             "presence_penalty",
@@ -245,7 +246,10 @@ class AzureOpenAIConfig:
                 - You should set tool_choice (see Forcing tool use) to instruct the model to explicitly use that tool
                 - Remember that the model will pass the input to the tool, so the name of the tool and description should be from the model’s perspective.
                 """
-                if json_schema is not None:
+                if json_schema is not None and (
+                    (api_version_year <= "2024" and api_version_month < "08")
+                    or "gpt-4o" not in model
+                ):  # azure api version "2024-08-01-preview" onwards supports 'json_schema' only for gpt-4o
                     _tool_choice = ChatCompletionToolChoiceObjectParam(
                         type="function",
                         function=ChatCompletionToolChoiceFunctionParam(
@@ -265,6 +269,9 @@ class AzureOpenAIConfig:
                     optional_params["json_mode"] = True
                 else:
                     optional_params["response_format"] = value
+            elif param == "max_completion_tokens":
+                # TODO - Azure OpenAI will probably add support for this, we should pass it through when Azure adds support
+                optional_params["max_tokens"] = value
             elif param in supported_openai_params:
                 optional_params[param] = value
 
